@@ -228,7 +228,7 @@ Constraints:
 # -------------------------
 # PDF report (structured)
 # -------------------------
-def generate_pdf_report(candidate_name, transcript, overall_score, tab_change_count=0, timings=None, total_duration=None):
+def generate_pdf_report(candidate_name, transcript, overall_score, tab_change_count=0, timings=None, total_duration=0):
     """
     Create a PDF bytes report with structured sections:
     - Header, candidate, timestamp
@@ -251,10 +251,9 @@ def generate_pdf_report(candidate_name, transcript, overall_score, tab_change_co
     y -= 18
     p.drawString(margin, y, f"Overall Score: {overall_score:.2f}/5")
     y -= 14
-    p.drawString(margin, y, f"Tab Changes During Interview: {tab_change_count}")
+    p.drawString(margin, y, f"Total Interview Duration: {int(total_duration//60)}m {int(total_duration%60)}s")
     y -= 14
-    if total_duration:
-        p.drawString(margin, y, f"Total Interview Duration: {total_duration}")
+    p.drawString(margin, y, f"Tab Changes During Interview: {tab_change_count}")
     y -= 20
     p.line(margin, y, width-margin, y)
     y -= 18
@@ -273,10 +272,11 @@ def generate_pdf_report(candidate_name, transcript, overall_score, tab_change_co
         ev = item.get("evaluation", {})
         p.drawString(margin+8, y, f"Score: {ev.get('score','N/A')}/5")
         y -= 12
-        if timings and idx-1 < len(timings):
-            p.drawString(margin+8, y, f"Time taken: {int(timings[idx-1])} seconds")
-            y -= 12
         p.drawString(margin+8, y, f"Feedback: {ev.get('feedback','')[:200]}")
+        y -= 12
+        # Add timing information
+        time_taken = timings[idx-1] if timings and idx-1 < len(timings) else 0
+        p.drawString(margin+8, y, f"Time taken: {int(time_taken)} seconds")
         y -= 12
         if ev.get("followup"):
             p.drawString(margin+8, y, f"Follow-up asked: {ev.get('followup')}")
