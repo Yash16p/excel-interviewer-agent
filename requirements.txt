@@ -6,3 +6,4 @@ tiktoken
 reportlab 
 python-dotenv
 gTTS
+matplotlib
