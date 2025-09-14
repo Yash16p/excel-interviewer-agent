@@ -1,38 +1,41 @@
 import streamlit as st
 
-def show_instructions_modal():
-    """Show interview instructions in an expandable section instead of modal"""
-    with st.expander("📋 Interview Instructions", expanded=False):
+def show_agreement_modal():
+    """Show interview agreement modal using expandable section"""
+    with st.expander("📋 Interview Instructions & Agreement", expanded=True):
         st.markdown("""
-        ### Interview Guidelines:
-        - This is a timed, adaptive mock interview (text answers)
-        - The interviewer will speak each question automatically (browser may require first interaction)
-        - Do not switch tabs or try to navigate away — a warning will appear
-        - Final feedback (scorecard + PDF) is shown at the end
+        ### 🎯 Interview Guidelines:
+        - **This is a timed, adaptive mock interview** (text answers only)
+        - **No external help allowed** - answers must be typed without assistance
+        - **Tab switching is monitored** - a warning will appear if you switch tabs
+        - **Questions adapt to your performance** - weaker candidates get more basic questions, stronger candidates move to advanced topics faster
+        - **Time tracking** - your response time per question is recorded for recruiter insights
+        - **Audio playback** - questions will be spoken automatically (browser may require first interaction)
+        
+        ### 📊 What We Measure:
+        - **Technical Excel knowledge** across formulas, pivot tables, data cleaning, and productivity
+        - **Problem-solving approach** and clarity of communication
+        - **Response time** and consistency across questions
+        - **Focus and attention** (tab switching behavior)
+        
+        ### ⚠️ Important:
+        - Final feedback (scorecard + PDF report) is shown at the end
+        - This assessment helps identify areas for improvement
         - **Tech note:** If audio doesn't autoplay, click on the page once to enable audio playback
         """)
+        
+        st.markdown("---")
+        st.markdown("**By proceeding, you agree to follow these interview rules and understand that your responses and timing will be recorded.**")
 
-def tab_detection_component(tab_change_count):
-    """Generate JavaScript component for tab change detection"""
-    return f"""
-    <script>
-    let tabChangeCount = {tab_change_count};
-    document.addEventListener('visibilitychange', function() {{
-        if (document.hidden && !window.interviewComplete) {{
-            tabChangeCount++;
-            alert("Attention: You switched tabs or minimized the window. Please return to the interview. This event may be recorded by the interviewer. Tab changes: " + tabChangeCount);
-            // Update the hidden input
-            const input = document.querySelector('input[type="number"]');
-            if (input) {{
-                input.value = tabChangeCount;
-                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            }}
-        }}
-    }});
-    window.addEventListener('blur', function() {{
-        if (!document.hidden && !window.interviewComplete) {{
-            // Handle blur events if needed
-        }}
-    }});
-    </script>
-    """
+def format_duration(seconds):
+    """Format seconds into human readable duration"""
+    if seconds < 60:
+        return f"{int(seconds)} seconds"
+    elif seconds < 3600:
+        minutes = int(seconds // 60)
+        secs = int(seconds % 60)
+        return f"{minutes}m {secs}s"
+    else:
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        return f"{hours}h {minutes}m"
