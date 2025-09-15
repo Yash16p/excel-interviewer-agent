@@ -1,271 +1,156 @@
-# 🧑‍💻 AI-Powered Excel Mock Interviewer
+## 🧑‍💻 AI-Powered Excel Mock Interviewer
 
-A sophisticated AI-driven interview system that conducts realistic Excel skill assessments using advanced language models. This application simulates a professional interview experience with intelligent question generation, comprehensive answer evaluation, and detailed feedback reporting.
+A Streamlit app that conducts a realistic, adaptive Excel interview. It generates questions, evaluates answers using an LLM, optionally asks follow‑ups, tracks timing, and produces a professional PDF report with a skill breakdown.
 
-## ✨ Features
+### ✨ Features
 
-### 🎯 Core Capabilities
-- **Intelligent Interview Flow**: Multi-turn conversation with adaptive questioning
-- **AI-Powered Evaluation**: Sophisticated answer assessment using GPT-4o-mini
-- **Smart Follow-up Logic**: Contextual follow-up questions (max 2 per interview)
-- **Text-to-Speech Integration**: Audio playback for all questions and feedback
-- **Professional PDF Reports**: Comprehensive performance summaries
-- **Session State Management**: Maintains conversation context throughout
+- **Adaptive interview flow**: Phase-based rounds (basic → intermediate → advanced) based on performance
+- **Dynamic question count**: Typically 3–5 questions, with early end for low performance
+- **LLM evaluation**: Neutral, professional scoring with multi-dimensional breakdown
+- **Smart follow-ups**: Optional follow-up when score is middling (with probability gate)
+- **Audio prompts**: Text-to-speech for questions, follow-ups, and outro
+- **Timing analytics**: Per-question timing, averages, and total interview time
+- **PDF report**: Downloadable, structured report with scores, feedback, timing and recommendations
+- **Tab monitoring**: Warns on tab switch during the active interview
 
-### 🎪 Interview Experience
-- **4 Main Questions**: Exactly 4 core Excel questions per interview
-- **Adaptive Difficulty**: Questions adjust based on candidate performance
-- **No Immediate Feedback**: Clean interview experience without score spoilers
-- **Professional Tone**: Neutral, interviewer-like evaluation style
-- **Skill Area Coverage**: Formulas, Pivot Tables, Data Cleaning, Productivity
+### 🚀 Quick Start
 
-## 🚀 Quick Start
+#### Prerequisites
+- Python 3.9+ (tested with 3.11)
+- OpenAI API key with access to `gpt-4o-mini`
 
-### Prerequisites
-- Python 3.8+
-- OpenAI API key
+#### Setup
 
-### Installation
+1. Clone and enter the project
+```bash
+git clone <repository-url>
+cd excel-interviewer-agent
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd excel-interviewer-agent
-   ```
+2. Create and activate a virtual environment
+```bash
+# Windows (PowerShell)
+python -m venv venv
+venv\Scripts\Activate.ps1
 
-2. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   
-   # Windows
-   venv\Scripts\activate
-   
-   # macOS/Linux
-   source venv/bin/activate
-   ```
+# macOS/Linux
+python -m venv venv
+source venv/bin/activate
+```
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
 
-4. **Set up environment variables**
-   Create a `.env` file in the project root:
-   ```env
-   OPENAI_API_KEY=your_openai_api_key_here
-   ```
+4. Configure environment
+Create a `.env` file in the project root:
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
 
-5. **Run the application**
-   ```bash
-   streamlit run app.py
-   ```
+5. Run the app
+```bash
+streamlit run app.py
+```
+Then open `http://localhost:8501` in your browser.
 
-6. **Access the application**
-   Open your browser to `http://localhost:8501`
+### 🏗️ Architecture
 
-## 🏗️ Architecture
-
-### File Structure
 ```
 excel-interviewer-agent/
-├── app.py              # Main Streamlit application
-├── utils.py            # Core AI functionality and utilities
-├── questions.py        # Interview configuration and constants
-├── requirements.txt    # Python dependencies
-├── .env               # Environment variables (create this)
-├── .gitignore         # Git ignore rules
-└── README.md          # This file
+├─ app.py            # Streamlit UI and interview flow
+├─ utils.py          # LLM calls, TTS, PDF, chart utilities
+├─ questions.py      # Skill areas, constants, fallback questions
+├─ requirements.txt  # Python dependencies
+└─ README.md         # Documentation
 ```
 
-### Core Components
+#### Core modules
+- **`app.py`**: Session state, UI, timing, phase progression, follow-up flow, results, download
+- **`utils.py`**:
+  - `evaluate_with_llm(question, answer, ideal, memory)` — neutral scoring + feedback JSON
+  - `select_next_question_api(transcript, asked_skills, avg_score)` — dynamic question generator
+  - `text_to_speech_bytes(text)` — returns MP3 bytes via gTTS
+  - `generate_pdf_report(candidate, transcript, overall, timings, total_duration)` — PDF bytes
+  - `skill_bar_chart_bytes(skill_map)` — matplotlib PNG bytes for skill averages
+  - `get_langchain_memory()` — optional conversation memory (best-effort)
+- **`questions.py`**: `SKILL_AREAS`, `MIN_QUESTIONS`, `MAX_QUESTIONS`, and `FALLBACK_QUESTIONS`
 
-#### 📱 `app.py` - User Interface
-- **Session State Management**: Tracks interview progress, transcript, and scores
-- **Interview Flow Control**: Manages question progression and follow-up logic
-- **UI Components**: Streamlit interface with audio integration
-- **Report Generation**: Displays results and handles PDF downloads
+### 🎮 How it works
 
-#### 🤖 `utils.py` - AI Engine
-- **Answer Evaluation** (`evaluate_with_llm`): Multi-dimensional scoring system
-- **Question Generation** (`select_next_question_api`): Dynamic question creation
-- **Text-to-Speech** (`text_to_speech`): Audio generation for accessibility
-- **PDF Reports** (`generate_pdf_report`): Professional feedback documents
-- **Memory Management** (`get_langchain_memory`): Conversation context tracking
+1. Candidate reads rules and starts interview.
+2. App plays a short phase intro and asks a question (with audio).
+3. Candidate submits an answer; the app:
+   - Times the question
+   - Evaluates using the LLM (neutral JSON result)
+   - May ask a follow-up if the score is middling
+4. Based on average score, the app adapts phase lengths and difficulty:
+   - Strong candidates advance sooner to harder questions
+   - Weak performance can end after the basic phase
+5. At completion, the app shows a scorecard, skill chart, timing analysis, recommendations, and a PDF download.
 
-#### ⚙️ `questions.py` - Configuration
-- **Skill Areas**: Defines Excel competency categories
-- **Interview Length**: Controls question count (4 questions)
-- **Fallback Questions**: Backup questions for API failures
+### 🤖 LLM configuration
 
-## 🎮 How It Works
+- **Library**: `openai` (Responses API via Chat Completions)
+- **Model**: `gpt-4o-mini`
+- **Evaluation**: `temperature=0.0`, `max_tokens=400`
+- **Question generation**: `temperature=0.6`, `max_tokens=300`
+- **Env**: `OPENAI_API_KEY` must be set (loaded via `python-dotenv`)
 
-### Interview Process
+### 🔎 Interview details
 
-1. **Introduction**
-   - AI introduces itself with audio
-   - Candidate enters name (optional)
-   - Interview begins with first question
+- **Phases**: `basic`, `intermediate`, `advanced` with dynamic lengths based on average score
+- **Count**: Typically 3–5 total (see `MIN_QUESTIONS`, `MAX_QUESTIONS` and phase logic)
+- **Follow-ups**:
+  - Trigger when score is between 2 and 4 (inclusive)
+  - Limited by `followup_limit` (default 1) and a probability gate (≈35%)
+  - No follow-up for very high or very low scores
+- **Skill areas**: Formulas, Pivot Tables, Data Cleaning, Productivity/Protection, Reporting
+- **Timing**: Per-question timers; overall and per-question stats displayed and included in the PDF
+- **Tab alerts**: Warns on `visibilitychange` during active interview
 
-2. **Question Flow**
-   - 4 main questions covering different Excel skill areas
-   - Each question includes audio playback
-   - Adaptive difficulty based on performance
-   - Smart follow-up questions (3-4/5 scores only, max 2 total)
-
-3. **Answer Evaluation**
-   - Multi-dimensional scoring (Correctness, Efficiency, Clarity, Completeness)
-   - Professional, neutral feedback tone
-   - No immediate score display during interview
-
-4. **Results & Reporting**
-   - Overall score calculation
-   - Skill area breakdown
-   - Complete transcript with individual feedback
-   - Downloadable PDF report
-
-### AI Evaluation System
-
-The system uses a sophisticated evaluation approach:
+### 🧩 Evaluation output shape
 
 ```python
 {
-  "score": <int 1-5>,
-  "breakdown": {
-    "Correctness": <int 1-5>,
-    "Efficiency": <int 1-5>, 
-    "Clarity": <int 1-5>,
-    "Completeness": <int 1-5>
-  },
-  "feedback": "<professional feedback>",
-  "followup": "<optional follow-up question>"
+  "score": 1..5,
+  "breakdown": {"Correctness": 1..5, "Efficiency": 1..5, "Clarity": 1..5, "Completeness": 1..5},
+  "feedback": "<neutral, constructive sentence>",
+  "followup": "<optional follow-up or empty>",
+  "clarity": 1..5,
+  "confidence": 1..5,
+  "problem_solving": 1..5
 }
 ```
 
-### Follow-up Logic
-- **No follow-up**: Perfect scores (5/5) or very low scores (1-2/5)
-- **Follow-up asked**: Medium scores (3-4/5) with room for improvement
-- **Maximum**: 2 follow-up questions per interview
-- **Smart termination**: Ends after exactly 4 main questions
+### 🛠️ Troubleshooting
 
-## 🛠️ Technical Details
+- **Missing API key**
+  - Error: `EnvironmentError: Set OPENAI_API_KEY in your environment or .env file`
+  - Fix: Create `.env` with a valid key and restart
+- **Audio not playing**
+  - gTTS requires internet; ensure connectivity
+  - Click once in the page to allow audio autoplay if the browser blocks it
+- **Imports failing**
+  - Ensure `pip install -r requirements.txt` completed successfully
+- **Charts/PDF issues**
+  - Headless environments may require display backends for matplotlib; the code saves to bytes to minimize issues
 
-### Dependencies
-- **streamlit**: Web application framework
-- **openai**: GPT-4o-mini integration for AI evaluation
-- **langchain**: Memory management for conversation context
-- **reportlab**: PDF report generation
-- **gTTS**: Text-to-speech functionality
-- **python-dotenv**: Environment variable management
+### 🔧 Customization
 
-### AI Model Configuration
-- **Model**: GPT-4o-mini (cost-efficient)
-- **Temperature**: 0.0 for evaluation (consistent), 0.7 for question generation (creative)
-- **Max Tokens**: 350 for evaluation, 400 for question generation
+- Tweak question difficulty/phase progression in `app.py` (`get_dynamic_phase_lengths` and flow)
+- Adjust evaluation prompt and scoring defaults in `utils.py`
+- Edit skill areas, min/max questions, and fallbacks in `questions.py`
 
-### Security & Privacy
-- API keys stored in environment variables
-- `.gitignore` excludes sensitive files
-- No data persistence beyond session
+### 📜 License
 
-## 📊 Performance Metrics
+MIT License. See `LICENSE` if included or add one as needed.
 
-### Evaluation Criteria
-1. **Correctness**: Technical accuracy of the answer
-2. **Efficiency**: Optimal approach and methodology
-3. **Clarity**: Communication and explanation quality
-4. **Completeness**: Thoroughness of the response
+### 🤝 Contributing
 
-### Skill Areas Covered
-- **Formulas & Functions**: Basic to advanced Excel functions
-- **Pivot Tables**: Data summarization and analysis
-- **Data Cleaning**: Data preparation and manipulation
-- **Productivity/Protection**: Workflow optimization and security
-
-## 🎯 Use Cases
-
-### Educational
-- **Student Assessment**: Evaluate Excel skills for courses
-- **Skill Verification**: Validate Excel competency levels
-- **Practice Interviews**: Mock interview preparation
-
-### Professional
-- **Hiring Process**: Screen candidates for Excel roles
-- **Training Assessment**: Measure training effectiveness
-- **Skill Gap Analysis**: Identify areas for improvement
-
-## 🔧 Configuration
-
-### Customizing Questions
-Edit `questions.py` to modify:
-- Interview length (MIN_QUESTIONS, MAX_QUESTIONS)
-- Skill areas covered (SKILL_AREAS)
-- Fallback questions (FALLBACK_QUESTIONS)
-
-### Adjusting Evaluation
-Modify the evaluation prompt in `utils.py`:
-- Scoring criteria
-- Feedback tone
-- Follow-up triggers
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **API Key Error**
-   ```
-   EnvironmentError: Set OPENAI_API_KEY in your .env file
-   ```
-   **Solution**: Create `.env` file with valid OpenAI API key
-
-2. **Import Errors**
-   ```
-   ImportError: cannot import name 'select_next_question_api'
-   ```
-   **Solution**: Ensure all dependencies are installed with `pip install -r requirements.txt`
-
-3. **Audio Playback Issues**
-   - Check internet connection for gTTS
-   - Verify temp directory permissions
-
-### Performance Tips
-- Use stable internet connection for API calls
-- Close other applications to free up memory
-- Restart browser if Streamlit becomes unresponsive
-
-## 📈 Future Enhancements
-
-### Planned Features
-- **Multiple Difficulty Levels**: Beginner, Intermediate, Advanced tracks
-- **Custom Question Sets**: Industry-specific Excel assessments
-- **Analytics Dashboard**: Performance tracking over time
-- **Multi-language Support**: Localized interviews
-- **Integration APIs**: Connect with HR systems
-
-### Technical Improvements
-- **Caching**: Reduce API calls for repeated questions
-- **Offline Mode**: Local question bank for reliability
-- **Advanced Analytics**: Detailed performance insights
-- **Mobile Optimization**: Responsive design improvements
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📞 Support
-
-For support, questions, or feature requests:
-- Create an issue in the repository
-- Contact the development team
-- Check the troubleshooting section above
+- Fork → branch → commit → PR. Please keep edits small and focused.
 
 ---
 
-**Built with ❤️ using Streamlit, OpenAI, and modern AI technologies**
+Built with Streamlit, OpenAI, gTTS, ReportLab, and matplotlib.

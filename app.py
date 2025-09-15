@@ -8,44 +8,22 @@ def get_avg_score():
     scores = [t["evaluation"]["score"] for t in st.session_state.transcript if "evaluation" in t]
     if not scores:
         return None
-    return sum(scores)/len(scores)
+    return sum(scores) / len(scores)
 
-# Lazy imports - only import when needed
-def get_utils():
-    if 'utils_imported' not in st.session_state:
-        with st.spinner("Loading interview system..."):
-            from utils import (
-                evaluate_with_llm,
-                generate_pdf_report,
-                get_langchain_memory,
-                select_next_question_api,
-                text_to_speech_bytes,
-                skill_bar_chart_bytes
-            )
-            st.session_state.utils_imported = {
-                'evaluate_with_llm': evaluate_with_llm,
-                'generate_pdf_report': generate_pdf_report,
-                'get_langchain_memory': get_langchain_memory,
-                'select_next_question_api': select_next_question_api,
-                'text_to_speech_bytes': text_to_speech_bytes,
-                'skill_bar_chart_bytes': skill_bar_chart_bytes
-            }
-    return st.session_state.utils_imported
-
-def get_questions():
-    if 'questions_imported' not in st.session_state:
-        from questions import MIN_QUESTIONS, MAX_QUESTIONS, SKILL_AREAS
-        st.session_state.questions_imported = {
-            'MIN_QUESTIONS': MIN_QUESTIONS,
-            'MAX_QUESTIONS': MAX_QUESTIONS,
-            'SKILL_AREAS': SKILL_AREAS
-        }
-    return st.session_state.questions_imported
+# Direct imports for faster loading
+from utils import (
+    evaluate_with_llm,
+    generate_pdf_report,
+    get_langchain_memory,
+    select_next_question_api,
+    text_to_speech_bytes,
+    skill_bar_chart_bytes
+)
+from questions import MIN_QUESTIONS, MAX_QUESTIONS, SKILL_AREAS
 
 def get_memory():
     if st.session_state.memory is None:
-        utils = get_utils()
-        st.session_state.memory = utils['get_langchain_memory']()
+        st.session_state.memory = get_langchain_memory()
     return st.session_state.memory
 
 # --- Session init ---
@@ -83,8 +61,6 @@ st.title("🧑‍💻 AI-Powered Excel Mock Interviewer (Recruiter-style PoC)")
 
 # Quick loading optimization - defer heavy operations
 if not st.session_state.get('app_loaded', False):
-    with st.spinner("🚀 Loading interview system..."):
-        time.sleep(0.3)  # Brief loading indicator
     st.session_state.app_loaded = True
 
 # Candidate name & instructions
@@ -95,7 +71,7 @@ st.sidebar.markdown("""
 - Do not switch tabs or try to navigate away — a warning will appear.
 - Final feedback (scorecard + PDF) is shown at the end.
 """)
-st.sidebar.markdown("**Tech note:** If audio doesn't autoplay, click on the page once to enable audio playback in your browser.")
+# st.sidebar.markdown("**Tech note:** If audio doesn't autoplay, click on the page once to enable audio playback in your browser.")
 
 st.session_state.candidate_name = st.text_input("Candidate Name (optional):", st.session_state.candidate_name)
 
@@ -114,13 +90,24 @@ if st.session_state.phase == "idle":
     **By proceeding, you agree to follow these guidelines.**
     """)
     
-    agree = st.checkbox("✅ I agree to the interview rules and will not use external assistance", key="agree_checkbox")
+    agree = st.checkbox("I agree to the interview rules and will not use external assistance", key="agree_checkbox")
     
     if not agree:
         st.warning("⚠️ Please check the agreement box to proceed with the interview.")
 
 # Interview progress tracking
 if not st.session_state.get("interview_complete", False) and st.session_state.phase != "idle":
+    # Tab change alert
+    st.components.v1.html("""
+    <script>
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            alert('⚠️ WARNING: You switched tabs or minimized the window. This is a timed interview - please stay focused!');
+        }
+    });
+    </script>
+    """, height=0)
+    
     st.markdown("---")
     st.markdown("### 📊 Interview Progress")
     
@@ -155,7 +142,6 @@ if st.session_state.phase == "idle":
             st.session_state.interview_start = time.time()  # Record interview start time
         st.rerun()
 
-
 # Dynamic phase length calculation based on performance
 def get_dynamic_phase_lengths(avg_score):
     """Calculate phase lengths based on candidate performance"""
@@ -178,8 +164,7 @@ def get_dynamic_phase_lengths(avg_score):
 
 # Play bytes audio in streamlit: st.audio accepts bytes
 def play_audio_now(text):
-    utils = get_utils()
-    audio_bytes = utils['text_to_speech_bytes'](text)
+    audio_bytes = text_to_speech_bytes(text)
     if audio_bytes:
         st.audio(audio_bytes, format="audio/mp3")
 
@@ -189,8 +174,7 @@ def ensure_question_for_phase(phase):
     if st.session_state.current_question is None:
         avg = get_avg_score()
         # Enhanced question selection based on performance
-        utils = get_utils()
-        q = utils['select_next_question_api'](st.session_state.transcript, st.session_state.asked_skills, avg)
+        q = select_next_question_api(st.session_state.transcript, st.session_state.asked_skills, avg)
         # Start timing for this question
         st.session_state.question_start = time.time()
         st.session_state.current_question = q
@@ -236,9 +220,8 @@ if st.session_state.phase in ("basic", "intermediate", "advanced") and not st.se
             st.session_state.question_start = None
         
         # evaluate (store evaluation but do not show score)
-        utils = get_utils()
         memory = get_memory()
-        ev = utils['evaluate_with_llm'](q["question"], user_answer, q.get("ideal",""), memory=memory)
+        ev = evaluate_with_llm(q["question"], user_answer, q.get("ideal",""), memory=memory)
         # store
         st.session_state.transcript.append({
             "question": q["question"],
@@ -306,8 +289,7 @@ if st.session_state.phase in ("basic", "intermediate", "advanced") and not st.se
             elif st.session_state.phase == "advanced":
                 # Advanced phase: end after required questions
                 total_questions = phase_lengths["basic"] + phase_lengths["intermediate"] + phase_lengths["advanced"]
-                questions = get_questions()
-                if answered >= total_questions or answered >= questions['MAX_QUESTIONS']:
+                if answered >= total_questions or answered >= MAX_QUESTIONS:
                     st.session_state.phase = "done"
                     st.session_state.interview_complete = True
                     st.session_state.current_question = None
@@ -333,8 +315,8 @@ if st.session_state.get("followup_pending"):
         # attach followup answer to last transcript item
         if st.session_state.transcript:
             st.session_state.transcript[-1]["followup_answer"] = fu_answer
-        st.session_state.followup_pending = False
-        st.session_state.followup_text = ""
+            st.session_state.followup_pending = False
+            st.session_state.followup_text = ""
         st.rerun()
 
 # --- If interview completed: show recruiters-style feedback and charts ---
@@ -346,7 +328,7 @@ if st.session_state.get("interview_complete"):
     # compute metrics
     transcript = st.session_state.transcript
     scores = [t["evaluation"].get("score",3) for t in transcript]
-    overall = sum(scores)/len(scores) if scores else 0
+    overall = sum(scores) / len(scores) if scores else 0
 
     # Build skill map
     skill_map = {}
@@ -381,8 +363,7 @@ if st.session_state.get("interview_complete"):
         st.metric("Avg time per question", f"{avg_time:.1f}s")
 
     # Skill bar chart
-    utils = get_utils()
-    chart_bytes = utils['skill_bar_chart_bytes'](skill_map)
+    chart_bytes = skill_bar_chart_bytes(skill_map)
     st.image(chart_bytes, use_container_width=True)
 
     # Strengths & Weaknesses
@@ -438,8 +419,7 @@ if st.session_state.get("interview_complete"):
         st.write("- " + r)
 
     # Download PDF with timing information
-    utils = get_utils()
-    pdf = utils['generate_pdf_report'](
+    pdf = generate_pdf_report(
         st.session_state.candidate_name,
         transcript, 
         overall,
