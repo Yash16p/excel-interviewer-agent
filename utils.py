@@ -178,21 +178,31 @@ def select_next_question_api(transcript, asked_skills, avg_score):
 
     # suggest skill areas to avoid
     avoid = asked_skills or []
-    prompt = f"""
-You are an interviewer generating one Excel interview question.
-Return JSON ONLY with fields: id (int), question (string), level (basic/intermediate/advanced), skill_area (one of: Formulas, Pivot Tables, Data Cleaning, Productivity/Protection, Reporting), ideal (short ideal answer).
+    # Determine question quality based on candidate performance
+    if avg_score is None or avg_score >= 3.5:
+        quality_instruction = "Generate a challenging, practical question that tests real-world Excel skills."
+    elif avg_score >= 2.5:
+        quality_instruction = "Generate a moderate difficulty question that builds on basic concepts."
+    else:
+        quality_instruction = "Generate a fundamental, clear question that tests basic Excel knowledge."
 
-Constraints:
-- Level should be: {difficulty}
-- Avoid repeating skill areas: {avoid}
-- Make question practical, unambiguous, and concise.
-- Ideal should be 1-2 sentence summary.
-"""
+    prompt = f"""
+    You are an expert Excel interviewer generating one high-quality interview question.
+    Return JSON ONLY with fields: id (int), question (string), level (basic/intermediate/advanced), skill_area (one of: Formulas, Pivot Tables, Data Cleaning, Productivity/Protection, Reporting), ideal (short ideal answer).
+
+    Constraints:
+    - Level should be: {difficulty}
+    - Avoid repeating skill areas: {avoid}
+    - {quality_instruction}
+    - Make question clear, specific, and practical for real work scenarios.
+    - Ideal should be 1-2 sentence summary with key points.
+    - Question should be unambiguous and test actual Excel skills, not just theory.
+    """
     try:
         resp = client.chat.completions.create(
             model=LLM_MODEL,
             messages=[
-                {"role": "system", "content": "You are a concise and practical Excel question generator."},
+                {"role": "system", "content": "You are an expert Excel interviewer who creates high-quality, practical questions that accurately assess real-world Excel skills. Focus on practical scenarios and clear, specific questions."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.6,
@@ -228,7 +238,7 @@ Constraints:
 # -------------------------
 # PDF report (structured)
 # -------------------------
-def generate_pdf_report(candidate_name, transcript, overall_score, tab_change_count=0, timings=None, total_duration=0):
+def generate_pdf_report(candidate_name, transcript, overall_score, timings=None, total_duration=0):
     """
     Create a PDF bytes report with structured sections:
     - Header, candidate, timestamp
@@ -252,8 +262,6 @@ def generate_pdf_report(candidate_name, transcript, overall_score, tab_change_co
     p.drawString(margin, y, f"Overall Score: {overall_score:.2f}/5")
     y -= 14
     p.drawString(margin, y, f"Total Interview Duration: {int(total_duration//60)}m {int(total_duration%60)}s")
-    y -= 14
-    p.drawString(margin, y, f"Tab Changes During Interview: {tab_change_count}")
     y -= 20
     p.line(margin, y, width-margin, y)
     y -= 18
