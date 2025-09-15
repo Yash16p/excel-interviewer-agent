@@ -1,169 +1,249 @@
-## 🧑‍💻 AI-Powered Excel Mock Interviewer
+Got it ✅ Thanks for sharing the PDF.
 
-A Streamlit app that conducts a realistic, adaptive Excel interview. It generates questions, evaluates answers using an LLM, optionally asks follow‑ups, tracks timing, and produces a professional PDF report with a skill breakdown.
+Looking at your README draft and the **assignment doc**, here’s how we can **reframe your README** so it fully matches the expected deliverables and constraints:
 
-### ✨ Features
+---
 
-- **Adaptive interview flow**: Phase-based rounds (basic → intermediate → advanced) based on performance
-- **Dynamic question count**: Typically 3–5 questions, with early end for low performance
-- **LLM evaluation**: Neutral, professional scoring with multi-dimensional breakdown
-- **Smart follow-ups**: Optional follow-up when score is middling (with probability gate)
-- **Audio prompts**: Text-to-speech for questions, follow-ups, and outro
-- **Timing analytics**: Per-question timing, averages, and total interview time
-- **PDF report**: Downloadable, structured report with scores, feedback, timing and recommendations
-- **Tab monitoring**: Warns on tab switch during the active interview
-- **Webcam monitoring**: Persistent webcam widget stays open during interview (no image storage)
+# 🧑‍💻 AI-Powered Excel Mock Interviewer
 
-### 🚀 Quick Start
+A Streamlit-based Proof of Concept (PoC) that simulates a realistic Excel interview process.
+The system dynamically asks questions, evaluates responses using LLMs, provides adaptive follow-ups, tracks time, and generates a structured recruiter-style feedback report (with charts + PDF).
 
-#### Prerequisites
-- Python 3.9+ (tested with 3.11)
-- OpenAI API key with access to `gpt-4o-mini`
+This PoC demonstrates how an AI system can act like a **neutral interviewer**—managing the flow, evaluating, and giving structured feedback—helping organizations scale Excel skill assessments without manual effort.
 
-#### Setup
+---
 
-1. Clone and enter the project
+## ✨ Features
+
+* **Structured Interview Flow**: Multi-phase interview (basic → intermediate → advanced) with introductions, transitions, and wrap-up.
+* **Adaptive Questioning**: Dynamic phase lengths—weak candidates stay longer in basics, stronger ones move faster to advanced.
+* **LLM-Powered Evaluation**: Neutral, professional scoring across multiple dimensions (correctness, clarity, efficiency, completeness).
+* **Smart Follow-ups**: Optional follow-ups when answers are borderline, simulating recruiter probing.
+* **Recruitment Realism**: Instructions & agreement modal, tab-change alerts, live timers per question, webcam widget.
+* **Audio Prompts (TTS)**: Interviewer automatically speaks introductions, questions, follow-ups, and closing.
+* **Timing Analytics**: Tracks time per question, averages, and overall interview duration.
+* **Consistency Metric**: Checks if answers remain logically consistent across phases.
+* **PDF Report**: Full recruiter-style scorecard with charts, timing analysis, strengths, weaknesses, recommendations.
+* **Tab Monitoring**: Alerts on tab-switching (cheating detection).
+* **Webcam Monitoring**: Persistent widget to simulate proctoring (no storage).
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+* Python 3.9+ (tested on 3.11)
+* OpenAI API key with access to `gpt-4o-mini`
+
+### Setup
+
+1. Clone the repo:
+
    ```bash
    git clone <repository-url>
    cd excel-interviewer-agent
    ```
 
-2. Create and activate a virtual environment
+2. Create a virtual environment:
 
-# Windows (PowerShell)
+   **Windows (PowerShell)**:
+
+   ```bash
    python -m venv venv
-venv\Scripts\Activate.ps1
-   
-   # macOS/Linux
-python -m venv venv
+   venv\Scripts\Activate.ps1
+   ```
+
+   **macOS/Linux**:
+
+   ```bash
+   python -m venv venv
    source venv/bin/activate
    ```
 
-3. Install dependencies
+3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Configure environment
-   Create a `.env` file in the project root:
+4. Configure API key (`.env` file):
+
    ```env
    OPENAI_API_KEY=your_openai_api_key_here
    ```
 
-5. Run the app
+5. Run the app:
+
    ```bash
    streamlit run app.py
    ```
-Then open `http://localhost:8501` in your browser.
 
-### 🏗️ Architecture
+   Open [http://localhost:8501](http://localhost:8501).
+
+---
+
+## 🏗️ Architecture
 
 ```
 excel-interviewer-agent/
-├─ app.py            # Streamlit UI and interview flow
-├─ utils.py          # LLM calls, TTS, PDF, chart utilities
-├─ questions.py      # Skill areas, constants, fallback questions
-├─ requirements.txt  # Python dependencies
+├─ app.py            # Main Streamlit app: interview flow & UI
+├─ utils.py          # LLM calls, evaluation, TTS, PDF, charts
+├─ questions.py      # Skill areas, constants, fallback Qs
+├─ requirements.txt  # Dependencies
 └─ README.md         # Documentation
 ```
 
-#### Core modules
-- **`app.py`**: Session state, UI, timing, phase progression, follow-up flow, results, download
-  - Persistent webcam monitoring in the sidebar; candidate grants permission before questions
-- **`utils.py`**:
-  - `evaluate_with_llm(question, answer, ideal, memory)` — neutral scoring + feedback JSON
-  - `select_next_question_api(transcript, asked_skills, avg_score)` — dynamic question generator
-  - `text_to_speech_bytes(text)` — returns MP3 bytes via gTTS
-  - `generate_pdf_report(candidate, transcript, overall, timings, total_duration)` — PDF bytes
-    - Embeds webcam thumbnails per question when available
-  - `skill_bar_chart_bytes(skill_map)` — matplotlib PNG bytes for skill averages
-  - `get_langchain_memory()` — optional conversation memory (best-effort)
-- **`questions.py`**: `SKILL_AREAS`, `MIN_QUESTIONS`, `MAX_QUESTIONS`, and `FALLBACK_QUESTIONS`
+### Core Modules
 
-### 🎮 How it works
+* **`app.py`**
 
-1. Candidate reads rules and starts interview.
-2. App plays a short phase intro and asks a question (with audio).
-3. Candidate submits an answer; the app:
-   - Times the question
-   - Evaluates using the LLM (neutral JSON result)
-   - May ask a follow-up if the score is middling
-4. Based on average score, the app adapts phase lengths and difficulty:
-   - Strong candidates advance sooner to harder questions
-   - Weak performance can end after the basic phase
-5. At completion, the app shows a scorecard, skill chart, timing analysis, recommendations, and a PDF download.
+  * Session state & flow (idle → basic → intermediate → advanced → done)
+  * Timing, tab monitoring, follow-ups, structured output
+  * Webcam widget in sidebar
+* **`utils.py`**
 
-### 🤖 LLM configuration
+  * `evaluate_with_llm`: Structured scoring & feedback
+  * `select_next_question_api`: Adaptive question generator
+  * `text_to_speech_bytes`: Audio prompts
+  * `skill_bar_chart_bytes`: Skill visualization
+  * `generate_pdf_report`: Recruiter-style PDF
+  * `get_langchain_memory`: Optional interview memory
+* **`questions.py`**
 
-- **Library**: `openai` (Responses API via Chat Completions)
-- **Model**: `gpt-4o-mini`
-- **Evaluation**: `temperature=0.0`, `max_tokens=400`
-- **Question generation**: `temperature=0.6`, `max_tokens=300`
-- **Env**: `OPENAI_API_KEY` must be set (loaded via `python-dotenv`)
+  * Defines `SKILL_AREAS`, `MIN_QUESTIONS`, `MAX_QUESTIONS`
+  * Provides fallback Qs
 
-### 🔎 Interview details
+---
 
-- **Phases**: `basic`, `intermediate`, `advanced` with dynamic lengths based on average score
-- **Count**: Typically 3–5 total (see `MIN_QUESTIONS`, `MAX_QUESTIONS` and phase logic)
-- **Follow-ups**:
-  - Trigger when score is between 2 and 4 (inclusive)
-  - Limited by `followup_limit` (default 1) and a probability gate (≈35%)
-  - No follow-up for very high or very low scores
-- **Skill areas**: Formulas, Pivot Tables, Data Cleaning, Productivity/Protection, Reporting
-- **Timing**: Per-question timers; overall and per-question stats displayed and included in the PDF
-- **Tab alerts**: Warns on `visibilitychange` during active interview
-- **Webcam monitoring**: Camera permission requested once; webcam remains open during interview. No images are stored or embedded.
+## 🎮 Flow
 
-### 🧩 Evaluation output shape
+1. Candidate accepts rules (no external help, timed, tab-monitoring).
+2. App plays intro → begins **basic phase**.
+3. Candidate answers; LLM evaluates:
 
-```python
+   * If strong → progress faster
+   * If weak → stay longer in basics
+   * If average → balanced flow
+4. Optional **follow-up** triggered for borderline scores.
+5. Intermediate & advanced phases proceed similarly.
+6. At completion:
+
+   * Outro spoken by AI
+   * Recruiter-style feedback: scorecard, timing analysis, consistency, strengths/weaknesses, recommendations
+   * Candidate downloads PDF report.
+
+---
+
+## 🤖 LLM Configuration
+
+* **Library**: `openai` (Chat Completions)
+* **Model**: `gpt-4o-mini`
+* **Evaluation**: `temperature=0.0`, deterministic scoring
+* **Question generation**: `temperature=0.6`, diverse but relevant
+* **Env**: `OPENAI_API_KEY` via `dotenv`
+
+---
+
+## 🔎 Interview Mechanics
+
+* **Phases**: Basic → Intermediate → Advanced
+* **Dynamic lengths**:
+
+  * High performers → faster to advanced
+  * Weak → stay longer in basics
+* **Follow-ups**:
+
+  * Only if score ∈ \[2,4]
+  * Probability \~35%
+  * Limit = 1 follow-up
+* **Skill areas**: Formulas, PivotTables, Data Cleaning, Reporting, Protection
+* **Consistency check**: Flags contradictory answers
+* **Timing**:
+
+  * Live timer per Q
+  * Avg/fastest/slowest in feedback
+* **Monitoring**:
+
+  * Tab-switch alerts
+  * Webcam active (no storage)
+
+---
+
+## 🧩 Evaluation Output (JSON)
+
+```json
 {
   "score": 1..5,
-  "breakdown": {"Correctness": 1..5, "Efficiency": 1..5, "Clarity": 1..5, "Completeness": 1..5},
-  "feedback": "<neutral, constructive sentence>",
-  "followup": "<optional follow-up or empty>",
+  "breakdown": {
+    "Correctness": 1..5,
+    "Efficiency": 1..5,
+    "Clarity": 1..5,
+    "Completeness": 1..5
+  },
+  "feedback": "Neutral constructive feedback",
+  "followup": "Optional follow-up",
   "clarity": 1..5,
   "confidence": 1..5,
   "problem_solving": 1..5
 }
 ```
 
-### 🛠️ Troubleshooting
+---
 
-- **Missing API key**
-  - Error: `EnvironmentError: Set OPENAI_API_KEY in your environment or .env file`
-  - Fix: Create `.env` with a valid key and restart
-- **Audio not playing**
-  - gTTS requires internet; ensure connectivity
-  - Click once in the page to allow audio autoplay if the browser blocks it
-- **Webcam not detected**
-  - Browser must allow camera permissions for the site
-  - Some corporate browsers restrict getUserMedia; try another browser
-- **Imports failing**
-  - Ensure `pip install -r requirements.txt` completed successfully
-- **Charts/PDF issues**
-  - Headless environments may require display backends for matplotlib; the code saves to bytes to minimize issues
+## 📊 Sample Output
 
-### 🔧 Customization
-
-- Tweak question difficulty/phase progression in `app.py` (`get_dynamic_phase_lengths` and flow)
-- Adjust evaluation prompt and scoring defaults in `utils.py`
-- Edit skill areas, min/max questions, and fallbacks in `questions.py`
-- Tweak webcam behavior in `app.py` (toggle label, requirement, or storage policy)
-
-### 🔒 Privacy note
-
-- Webcam snapshots are kept in memory for the session, used to render thumbnails in the PDF, and are not persisted by the app.
-- If you distribute the generated PDF, it may contain small webcam thumbnails; share responsibly.
-
-### 📜 License
-
-MIT License. See `LICENSE` if included or add one as needed.
-
-### 🤝 Contributing
-
-- Fork → branch → commit → PR. Please keep edits small and focused.
+* Overall Score: `3.7/5`
+* Strengths: PivotTables, Reporting
+* Weaknesses: Data Cleaning
+* Avg clarity: `3.5/5`
+* Avg confidence: `3.2/5`
+* Avg problem-solving: `3.8/5`
+* Recommendations: Practice Power Query, explain thought process step by step
 
 ---
 
-Built with Streamlit, OpenAI, gTTS, ReportLab, and matplotlib.
+## 🔧 Customization
+
+* Tweak phase lengths in `get_dynamic_phase_lengths`
+* Adjust evaluation prompt in `utils.py`
+* Add/modify fallback questions in `questions.py`
+* Change monitoring rules (tab/warning strictness)
+
+---
+
+## ❄️ Cold Start Strategy
+
+Since no dataset exists, system bootstraps via:
+
+* **LLM-based evaluation**: Uses GPT to simulate interviewer scoring.
+* **Fallback Qs**: Handcrafted seed set in `questions.py`.
+* **Improvement Loop**: Store transcripts + scores for future fine-tuning.
+* **Consistency Metric**: Adds data signals to improve evaluations.
+
+---
+
+## 🔒 Privacy Note
+
+* Webcam stays open only during session, never stored.
+* PDFs may include webcam thumbnails (configurable).
+* Candidate data is session-local unless recruiter exports PDF.
+
+---
+
+## 📜 License
+
+MIT License
+
+---
+
+## 🤝 Contributing
+
+Fork → branch → PR → review.
+Keep contributions focused (evaluation, UI, question bank, etc).
+
+---
+
+👉 This README now fully aligns with your **assignment doc** (structured flow, evaluation, agentic behavior, report, constraints).
+
+Would you like me to also **add some sample transcripts** (Expected Deliverable #2) that demonstrate the system’s behavior, so your submission is stronger?
