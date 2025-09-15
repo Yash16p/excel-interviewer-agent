@@ -29,10 +29,6 @@ A Streamlit app that conducts a realistic, adaptive Excel interview. It generate
    ```
 
 2. Create and activate a virtual environment
-   ```bash
-  python -m venv venv
-  venv\Scripts\activate
-  ```
 
 # Windows (PowerShell)
    python -m venv venv
