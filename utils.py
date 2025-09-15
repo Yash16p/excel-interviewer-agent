@@ -7,6 +7,7 @@ from datetime import datetime
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 from dotenv import load_dotenv
 from gtts import gTTS
 import matplotlib.pyplot as plt
@@ -286,6 +287,7 @@ def generate_pdf_report(candidate_name, transcript, overall_score, timings=None,
         time_taken = timings[idx-1] if timings and idx-1 < len(timings) else 0
         p.drawString(margin+8, y, f"Time taken: {int(time_taken)} seconds")
         y -= 12
+        # Webcam thumbnails removed for persistent monitoring approach (no image storage)
         if ev.get("followup"):
             p.drawString(margin+8, y, f"Follow-up asked: {ev.get('followup')}")
             y -= 12

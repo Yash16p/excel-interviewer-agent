@@ -55,6 +55,8 @@ if "interview_start" not in st.session_state:
     st.session_state.interview_start = None
 if "show_instructions" not in st.session_state:
     st.session_state.show_instructions = False
+if "webcam_initialized" not in st.session_state:
+    st.session_state.webcam_initialized = False
 
 st.set_page_config(page_title="AI-Powered Excel Mock Interviewer", layout="centered")
 st.title("🧑‍💻 AI-Powered Excel Mock Interviewer (Recruiter-style PoC)")
@@ -72,6 +74,14 @@ st.sidebar.markdown("""
 - Final feedback (scorecard + PDF) is shown at the end.
 """)
 # st.sidebar.markdown("**Tech note:** If audio doesn't autoplay, click on the page once to enable audio playback in your browser.")
+
+# Optional webcam verification
+st.sidebar.markdown("---")
+if st.session_state.phase in ("basic", "intermediate", "advanced") and not st.session_state.get("interview_complete", False):
+    st.sidebar.subheader("Webcam Monitoring")
+    st.sidebar.caption("Please allow camera access. Keep this open during the interview.")
+    # Persistent webcam widget; remains visible throughout the interview
+    st.sidebar.camera_input("Webcam (kept open)", key="webcam_persistent")
 
 st.session_state.candidate_name = st.text_input("Candidate Name (optional):", st.session_state.candidate_name)
 
@@ -181,6 +191,13 @@ def ensure_question_for_phase(phase):
 
 # Main interview loop UI
 if st.session_state.phase in ("basic", "intermediate", "advanced") and not st.session_state.followup_pending:
+    # Gate: require webcam acknowledgement before showing questions
+    if not st.session_state.webcam_initialized:
+        st.info("Please allow webcam access in the sidebar. Once enabled, click Continue to start questions.")
+        if st.button("Continue"):
+            st.session_state.webcam_initialized = True
+            st.rerun()
+        st.stop()
     # Play intro to phase (once)
     if not st.session_state.intro_played:
         if st.session_state.phase == "basic":
@@ -223,14 +240,15 @@ if st.session_state.phase in ("basic", "intermediate", "advanced") and not st.se
         memory = get_memory()
         ev = evaluate_with_llm(q["question"], user_answer, q.get("ideal",""), memory=memory)
         # store
-        st.session_state.transcript.append({
+        item = {
             "question": q["question"],
             "answer": user_answer,
             "evaluation": ev,
             "skill_area": q.get("skill_area","General"),
             "id": q.get("id"),
             "time_taken": st.session_state.timings[-1] if st.session_state.timings else 0
-        })
+        }
+        st.session_state.transcript.append(item)
         st.session_state.asked_skills.append(q.get("skill_area","General"))
         # Decide if follow-up is needed: if score between 2 and 4 (inclusive) and followup_limit not exceeded
         score = ev.get("score",3)
@@ -433,7 +451,7 @@ if st.session_state.get("interview_complete"):
         keys_to_clear = [
             "phase", "transcript", "asked_skills", "current_question", "intro_played",
             "followup_pending", "followup_text", "followup_limit", "interview_complete",
-            "timings", "question_start", "interview_start", "show_instructions"
+            "timings", "question_start", "interview_start", "show_instructions", "webcam_initialized"
         ]
         for k in keys_to_clear:
             if k in st.session_state:

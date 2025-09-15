@@ -12,6 +12,7 @@ A Streamlit app that conducts a realistic, adaptive Excel interview. It generate
 - **Timing analytics**: Per-question timing, averages, and total interview time
 - **PDF report**: Downloadable, structured report with scores, feedback, timing and recommendations
 - **Tab monitoring**: Warns on tab switch during the active interview
+- **Webcam monitoring**: Persistent webcam widget stays open during interview (no image storage)
 
 ### 🚀 Quick Start
 
@@ -22,37 +23,37 @@ A Streamlit app that conducts a realistic, adaptive Excel interview. It generate
 #### Setup
 
 1. Clone and enter the project
-```bash
-git clone <repository-url>
-cd excel-interviewer-agent
-```
+   ```bash
+   git clone <repository-url>
+   cd excel-interviewer-agent
+   ```
 
 2. Create and activate a virtual environment
-```bash
+   ```bash
 # Windows (PowerShell)
-python -m venv venv
+   python -m venv venv
 venv\Scripts\Activate.ps1
-
-# macOS/Linux
+   
+   # macOS/Linux
 python -m venv venv
-source venv/bin/activate
-```
+   source venv/bin/activate
+   ```
 
 3. Install dependencies
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 4. Configure environment
-Create a `.env` file in the project root:
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-```
+   Create a `.env` file in the project root:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
 
 5. Run the app
-```bash
-streamlit run app.py
-```
+   ```bash
+   streamlit run app.py
+   ```
 Then open `http://localhost:8501` in your browser.
 
 ### 🏗️ Architecture
@@ -68,11 +69,13 @@ excel-interviewer-agent/
 
 #### Core modules
 - **`app.py`**: Session state, UI, timing, phase progression, follow-up flow, results, download
+  - Persistent webcam monitoring in the sidebar; candidate grants permission before questions
 - **`utils.py`**:
   - `evaluate_with_llm(question, answer, ideal, memory)` — neutral scoring + feedback JSON
   - `select_next_question_api(transcript, asked_skills, avg_score)` — dynamic question generator
   - `text_to_speech_bytes(text)` — returns MP3 bytes via gTTS
   - `generate_pdf_report(candidate, transcript, overall, timings, total_duration)` — PDF bytes
+    - Embeds webcam thumbnails per question when available
   - `skill_bar_chart_bytes(skill_map)` — matplotlib PNG bytes for skill averages
   - `get_langchain_memory()` — optional conversation memory (best-effort)
 - **`questions.py`**: `SKILL_AREAS`, `MIN_QUESTIONS`, `MAX_QUESTIONS`, and `FALLBACK_QUESTIONS`
@@ -109,6 +112,7 @@ excel-interviewer-agent/
 - **Skill areas**: Formulas, Pivot Tables, Data Cleaning, Productivity/Protection, Reporting
 - **Timing**: Per-question timers; overall and per-question stats displayed and included in the PDF
 - **Tab alerts**: Warns on `visibilitychange` during active interview
+- **Webcam monitoring**: Camera permission requested once; webcam remains open during interview. No images are stored or embedded.
 
 ### 🧩 Evaluation output shape
 
@@ -132,6 +136,9 @@ excel-interviewer-agent/
 - **Audio not playing**
   - gTTS requires internet; ensure connectivity
   - Click once in the page to allow audio autoplay if the browser blocks it
+- **Webcam not detected**
+  - Browser must allow camera permissions for the site
+  - Some corporate browsers restrict getUserMedia; try another browser
 - **Imports failing**
   - Ensure `pip install -r requirements.txt` completed successfully
 - **Charts/PDF issues**
@@ -142,6 +149,12 @@ excel-interviewer-agent/
 - Tweak question difficulty/phase progression in `app.py` (`get_dynamic_phase_lengths` and flow)
 - Adjust evaluation prompt and scoring defaults in `utils.py`
 - Edit skill areas, min/max questions, and fallbacks in `questions.py`
+- Tweak webcam behavior in `app.py` (toggle label, requirement, or storage policy)
+
+### 🔒 Privacy note
+
+- Webcam snapshots are kept in memory for the session, used to render thumbnails in the PDF, and are not persisted by the app.
+- If you distribute the generated PDF, it may contain small webcam thumbnails; share responsibly.
 
 ### 📜 License
 
