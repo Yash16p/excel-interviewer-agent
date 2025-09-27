@@ -1,35 +1,27 @@
-Got it ✅ Thanks for sharing the PDF.
+# 🧑‍💻 Multimodal AI Job Interview Agent
 
-Looking at your README draft and the **assignment doc**, here’s how we can **reframe your README** so it fully matches the expected deliverables and constraints:
+A **fully voice-driven, multimodal AI interview system** that simulates realistic job interviews for multiple roles (Data Scientist, SDE, Data Analyst, etc.). Candidates speak their answers, are monitored via webcam, and are evaluated in real time by an LLM agent that adapts dynamically to their responses. At the end, a recruiter-style PDF report with scores, charts, and recommendations is generated.
 
----
-
-# 🧑‍💻 AI-Powered Excel Mock Interviewer
-
-A Streamlit-based Proof of Concept (PoC) that simulates a realistic Excel interview process.
-The system dynamically asks questions, evaluates responses using LLMs, provides adaptive follow-ups, tracks time, and generates a structured recruiter-style feedback report (with charts + PDF).
-
-This PoC demonstrates how an AI system can act like a **neutral interviewer**—managing the flow, evaluating, and giving structured feedback—helping organizations scale Excel skill assessments without manual effort.
+This project demonstrates how AI can **fully simulate a professional interview**, combining vision, audio, RAG-based knowledge grounding, and agentic LLM reasoning.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-* **Structured Interview Flow**: Multi-phase interview (basic → intermediate → advanced) with introductions, transitions, and wrap-up.
-* **Adaptive Questioning**: Dynamic phase lengths—weak candidates stay longer in basics, stronger ones move faster to advanced.
-* **LLM-Powered Evaluation**: Neutral, professional scoring across multiple dimensions (correctness, clarity, efficiency, completeness).
-* **Smart Follow-ups**: Optional follow-ups when answers are borderline, simulating recruiter probing.
-* **Recruitment Realism**: Instructions & agreement modal, tab-change alerts, live timers per question, webcam widget.
-* **Audio Prompts (TTS)**: Interviewer automatically speaks introductions, questions, follow-ups, and closing.
-* **Timing Analytics**: Tracks time per question, averages, and overall interview duration.
-* **Consistency Metric**: Checks if answers remain logically consistent across phases.
-* **PDF Report**: Full recruiter-style scorecard with charts, timing analysis, strengths, weaknesses, recommendations.
-* **Tab Monitoring**: Alerts on tab-switching (cheating detection).
-* **Webcam Monitoring**: Persistent widget to simulate proctoring (no storage).
+* **Voice-First Interviewing**: Candidates respond using speech; no typing required.
+* **Dynamic Adaptive Questions**: LLM generates next questions based on candidate’s previous answers, skill level, and resume.
+* **Multimodal Evaluation**: Combines LLM reasoning, speech metrics, and vision metrics (eye contact, posture, facial expressions).
+* **Role & Persona Customization**: Candidate selects desired role and interviewer persona (friendly, strict, technical, etc.).
+* **RAG-Powered Context**: Ground evaluations and questions with role-specific knowledge documents.
+* **Smart Follow-Ups**: Optional clarifying or advanced questions triggered based on previous responses.
+* **Tab & Webcam Monitoring**: Detects tab-switching and monitors candidate attention for proctoring.
+* **Speech Analytics**: Measures clarity, confidence, speaking pace, and filler word usage.
+* **Recruiter-Style PDF Report**: Includes scores, skill radar charts, timing metrics, strengths, weaknesses, and recommendations.
+* **Cold Start Strategy**: Bootstrapped via LLM prompts + seed questions; improvement loop for fine-tuning.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (PoC)
 
 ### Prerequisites
 
@@ -40,194 +32,180 @@ This PoC demonstrates how an AI system can act like a **neutral interviewer**—
 
 1. Clone the repo:
 
-   ```bash
-   git clone <repository-url>
-   cd excel-interviewer-agent
-   ```
+```bash
+git clone <repository-url>
+cd multimodal-interview-agent
+```
 
 2. Create a virtual environment:
 
-   **Windows (PowerShell)**:
+**Windows (PowerShell)**:
 
-   ```bash
-   python -m venv venv
-   venv\Scripts\Activate.ps1
-   ```
+```bash
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
 
-   **macOS/Linux**:
+**macOS/Linux**:
 
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
-   ```
+```bash
+python -m venv venv
+source venv/bin/activate
+```
 
 3. Install dependencies:
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-4. Configure API key (`.env` file):
+4. Configure API key (`.env`):
 
-   ```env
-   OPENAI_API_KEY=your_openai_api_key_here
-   ```
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
 
-5. Run the app:
+5. Run the Streamlit PoC:
 
-   ```bash
-   streamlit run app.py
-   ```
+```bash
+streamlit run app.py
+```
 
-   Open [http://localhost:8501](http://localhost:8501).
+Open [http://localhost:8501](http://localhost:8501).
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-excel-interviewer-agent/
-├─ app.py            # Main Streamlit app: interview flow & UI
-├─ utils.py          # LLM calls, evaluation, TTS, PDF, charts
-├─ questions.py      # Skill areas, constants, fallback Qs
+multimodal-interview-agent/
+├─ app.py            # Streamlit PoC: UI, audio + webcam capture
+├─ backend/          # FastAPI endpoints: evaluation, question generation, RAG, PDF
+├─ utils.py          # LLM calls, TTS, evaluation, charts, PDF generation
+├─ questions.py      # Seed questions per role
+├─ rag_docs/         # Role-specific documents for grounding questions/evaluation
 ├─ requirements.txt  # Dependencies
-└─ README.md         # Documentation
+└─ README.md
 ```
 
 ### Core Modules
 
 * **`app.py`**
 
-  * Session state & flow (idle → basic → intermediate → advanced → done)
-  * Timing, tab monitoring, follow-ups, structured output
-  * Webcam widget in sidebar
+  * Candidate flow: resume upload, role selection, persona selection
+  * Audio and webcam capture
+  * Frontend timers, tab monitoring, and live feedback
+* **`backend/`**
+
+  * ASR (Whisper) transcription
+  * Vision analytics (MediaPipe, FER)
+  * Speech metrics extraction
+  * LLM evaluation & dynamic question generation
+  * RAG retrieval
 * **`utils.py`**
 
-  * `evaluate_with_llm`: Structured scoring & feedback
-  * `select_next_question_api`: Adaptive question generator
-  * `text_to_speech_bytes`: Audio prompts
-  * `skill_bar_chart_bytes`: Skill visualization
-  * `generate_pdf_report`: Recruiter-style PDF
-  * `get_langchain_memory`: Optional interview memory
-* **`questions.py`**
-
-  * Defines `SKILL_AREAS`, `MIN_QUESTIONS`, `MAX_QUESTIONS`
-  * Provides fallback Qs
+  * `evaluate_with_llm`: Deterministic structured scoring
+  * `generate_next_question`: Adaptive question generation
+  * `text_to_speech_bytes`: TTS for questions
+  * `skill_bar_chart_bytes`: Radar charts for report
+  * `generate_pdf_report`: Recruiter-style final report
 
 ---
 
 ## 🎮 Flow
 
-1. Candidate accepts rules (no external help, timed, tab-monitoring).
-2. App plays intro → begins **basic phase**.
-3. Candidate answers; LLM evaluates:
+1. Candidate accepts consent & rules (audio, webcam, no cheating).
+2. Upload resume and select desired role + interviewer persona.
+3. AI starts interview:
 
-   * If strong → progress faster
-   * If weak → stay longer in basics
-   * If average → balanced flow
-4. Optional **follow-up** triggered for borderline scores.
-5. Intermediate & advanced phases proceed similarly.
-6. At completion:
+   * Speaks the question via TTS
+   * Candidate answers verbally
+   * Backend captures audio + webcam → ASR + vision + speech metrics → LLM evaluates
+4. Dynamic question progression based on candidate’s performance.
+5. Optional follow-ups triggered for borderline or advanced responses.
+6. Interview concludes:
 
-   * Outro spoken by AI
-   * Recruiter-style feedback: scorecard, timing analysis, consistency, strengths/weaknesses, recommendations
-   * Candidate downloads PDF report.
-
----
-
-## 🤖 LLM Configuration
-
-* **Library**: `openai` (Chat Completions)
-* **Model**: `gpt-4o-mini`
-* **Evaluation**: `temperature=0.0`, deterministic scoring
-* **Question generation**: `temperature=0.6`, diverse but relevant
-* **Env**: `OPENAI_API_KEY` via `dotenv`
+   * AI speaks closing statements
+   * Full PDF report generated with scores, skill charts, proctoring summary, and recommendations
+   * Candidate can download the report
 
 ---
 
-## 🔎 Interview Mechanics
+## 🤖 LLM & Agent Configuration
 
-* **Phases**: Basic → Intermediate → Advanced
-* **Dynamic lengths**:
-
-  * High performers → faster to advanced
-  * Weak → stay longer in basics
-* **Follow-ups**:
-
-  * Only if score ∈ \[2,4]
-  * Probability \~35%
-  * Limit = 1 follow-up
-* **Skill areas**: Formulas, PivotTables, Data Cleaning, Reporting, Protection
-* **Consistency check**: Flags contradictory answers
-* **Timing**:
-
-  * Live timer per Q
-  * Avg/fastest/slowest in feedback
-* **Monitoring**:
-
-  * Tab-switch alerts
-  * Webcam active (no storage)
+* **Model**: `gpt-4o-mini` (OpenAI)
+* **Evaluation**: `temperature=0.0` for deterministic scoring
+* **Question generation**: `temperature=0.6` for adaptive, diverse questions
+* **RAG grounding**: Top-K role documents used to ensure accuracy
+* **Agentic loop**: Evaluates previous answers, updates candidate phase, generates next question
 
 ---
 
-## 🧩 Evaluation Output (JSON)
+## 🔎 Multimodal Evaluation Metrics
+
+* **Speech Metrics**: Words per minute, filler word ratio, clarity, confidence
+* **Vision Metrics**: Eye contact ratio, posture stability, emotion distribution
+* **LLM Scoring**: Correctness, clarity, depth, relevance, optional follow-up suggestions
+* **Proctoring**: Tab switches, prolonged face absence, suspicious background audio
+* **Consistency**: Checks if answers remain logically coherent across questions
+
+---
+
+## 🧩 Sample Evaluation JSON
 
 ```json
 {
   "score": 1..5,
   "breakdown": {
     "Correctness": 1..5,
-    "Efficiency": 1..5,
     "Clarity": 1..5,
-    "Completeness": 1..5
+    "Depth": 1..5,
+    "Relevance": 1..5
   },
   "feedback": "Neutral constructive feedback",
   "followup": "Optional follow-up",
-  "clarity": 1..5,
-  "confidence": 1..5,
-  "problem_solving": 1..5
+  "vision_metrics": {"eye_contact":0.7,"posture":0.8},
+  "speech_metrics": {"wpm":110,"filler_ratio":0.03}
 }
 ```
 
 ---
 
-## 📊 Sample Output
+## 📊 Sample PDF Report Includes
 
-* Overall Score: `3.7/5`
-* Strengths: PivotTables, Reporting
-* Weaknesses: Data Cleaning
-* Avg clarity: `3.5/5`
-* Avg confidence: `3.2/5`
-* Avg problem-solving: `3.8/5`
-* Recommendations: Practice Power Query, explain thought process step by step
+* Overall score & percentile
+* Radar charts of skills per competency
+* Strengths & weaknesses
+* Speech & vision metrics summary
+* Proctoring flags
+* Recommendations & next steps
 
 ---
 
 ## 🔧 Customization
 
-* Tweak phase lengths in `get_dynamic_phase_lengths`
-* Adjust evaluation prompt in `utils.py`
-* Add/modify fallback questions in `questions.py`
-* Change monitoring rules (tab/warning strictness)
+* Add/modify roles, personas, seed questions in `questions.py`
+* Adjust evaluation prompts in `utils.py`
+* Modify monitoring rules or thresholds for tab switches & webcam
+* Add new RAG documents per role in `rag_docs/`
 
 ---
 
-## ❄️ Cold Start Strategy
+## ❄️ Cold Start & Improvement Loop
 
-Since no dataset exists, system bootstraps via:
-
-* **LLM-based evaluation**: Uses GPT to simulate interviewer scoring.
-* **Fallback Qs**: Handcrafted seed set in `questions.py`.
-* **Improvement Loop**: Store transcripts + scores for future fine-tuning.
-* **Consistency Metric**: Adds data signals to improve evaluations.
+* **LLM-based evaluation** for initial scoring without dataset
+* **Seed questions** as fallback
+* **Store transcripts & evaluations** in MongoDB for future fine-tuning
+* **Adaptive consistency metric** to improve question selection & evaluation
 
 ---
 
 ## 🔒 Privacy Note
 
-* Webcam stays open only during session, never stored.
-* PDFs may include webcam thumbnails (configurable).
-* Candidate data is session-local unless recruiter exports PDF.
+* Webcam stays open only during the session; frames discarded unless opted-in
+* Audio stored temporarily for processing
+* Candidate can request data deletion
+* LLM evaluations and PDF reports are deterministic and secure
 
 ---
 
@@ -239,11 +217,8 @@ MIT License
 
 ## 🤝 Contributing
 
-Fork → branch → PR → review.
-Keep contributions focused (evaluation, UI, question bank, etc).
+1. Fork → branch → PR → review
+2. Keep contributions focused on evaluation, UI, question bank, or metrics
+3. Suggest new roles, persona styles, or RAG docs
 
----
 
-👉 This README now fully aligns with your **assignment doc** (structured flow, evaluation, agentic behavior, report, constraints).
-
-Would you like me to also **add some sample transcripts** (Expected Deliverable #2) that demonstrate the system’s behavior, so your submission is stronger?
