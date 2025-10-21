@@ -1,0 +1,5 @@
+# This directory will contain role-specific interview questions
+# Add question banks here:
+# - data_scientist_questions.json
+# - software_engineer_questions.json
+# - business_analyst_questions.json

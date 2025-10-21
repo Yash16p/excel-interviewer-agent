@@ -1,9 +1,0 @@
-streamlit 
-langchain 
-langchain-community
-openai 
-tiktoken
-reportlab 
-python-dotenv
-gTTS
-matplotlib

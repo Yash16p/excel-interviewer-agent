@@ -1,0 +1,5 @@
+# This directory will contain RAG knowledge base documents
+# Add domain-specific documents here:
+# - data_science_knowledge.txt
+# - software_engineering_concepts.txt
+# - business_analysis_frameworks.txt

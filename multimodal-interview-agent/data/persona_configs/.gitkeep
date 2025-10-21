@@ -1,0 +1,5 @@
+# This directory will contain AI interviewer persona configurations
+# Add persona configs here:
+# - technical_interviewer.json
+# - behavioral_interviewer.json
+# - senior_manager_interviewer.json
